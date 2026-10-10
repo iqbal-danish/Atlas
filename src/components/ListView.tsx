@@ -174,27 +174,35 @@ export const ListView: React.FC<ListViewProps> = ({ tabId }) => {
       if (nameLower === 'perflogs') return 'Log Folder';
       return 'Folder';
     }
-    const ext = entry.extension?.toLowerCase() || '';
+    const ext =
+      entry.extension?.toLowerCase() ||
+      (entry.name.includes('.') ? entry.name.split('.').pop()?.toLowerCase() : '') ||
+      '';
     if (!ext) return 'Document';
 
     switch (ext) {
+      case 'xml': case 'xsl': case 'xslt': return 'XML Document';
+      case 'json': case 'json5': case 'jsonc': return 'JSON Document';
+      case 'pdf': return 'PDF Document';
+      case 'csv': return 'CSV Document';
+      case 'xls': case 'xlsx': return 'Excel Spreadsheet';
+      case 'doc': case 'docx': return 'Word Document';
+      case 'ppt': case 'pptx': return 'PowerPoint Presentation';
+      case 'txt': return 'Plain Text Document';
+      case 'md': return 'Markdown Document';
+      case 'log': return 'Log Document';
+      case 'sql': return 'SQL Database Script';
+      case 'yaml': case 'yml': return 'YAML Document';
       case 'dll': return 'Dynamic Library';
       case 'sys': return 'System File';
-      case 'log': return 'Log Document';
       case 'rdb': case 'db': case 'sqlite': case 'sqlite3': return 'Database File';
       case 'exe': return 'Executable Application';
       case 'msi': return 'Windows Installer Package';
       case 'cmd': case 'bat': case 'ps1': return 'Command Script';
-      case 'txt': return 'Plain Text Document';
-      case 'md': return 'Markdown Document';
-      case 'pdf': return 'PDF Document';
-      case 'doc': case 'docx': return 'Word Document';
-      case 'xls': case 'xlsx': case 'csv': return 'Spreadsheet';
       case 'zip': case 'rar': case '7z': case 'tar': case 'gz': return 'Compressed Archive';
       case 'png': case 'jpg': case 'jpeg': case 'gif': case 'webp': case 'svg': case 'ico': return 'Image File';
       case 'mp3': case 'wav': case 'flac': case 'm4a': return 'Audio File';
       case 'mp4': case 'mkv': case 'avi': case 'mov': return 'Video File';
-      case 'json': case 'xml': case 'yaml': case 'yml': return 'Data File';
       case 'ts': case 'tsx': case 'js': case 'jsx': return 'JavaScript/TypeScript Source';
       case 'py': return 'Python Source';
       case 'rs': return 'Rust Source';

@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Save,
-  CheckCircle,
-  AlertCircle,
   FileCode,
   Search,
   ChevronLeft,
   ChevronRight,
   ArrowRight,
-  Sparkles,
-  Check,
   X,
   Code,
   FileText,
@@ -29,7 +25,6 @@ export const LargeFileEditor: React.FC = () => {
     isLoading,
     isDirty,
     syntaxType,
-    validationResult,
     searchQuery,
     isRegex,
     caseSensitive,
@@ -39,8 +34,6 @@ export const LargeFileEditor: React.FC = () => {
     isSearching,
     loadPage,
     setContent,
-    formatContent,
-    validateContent,
     saveFile,
     searchInFile,
     nextMatch,
@@ -163,30 +156,6 @@ export const LargeFileEditor: React.FC = () => {
 
         {/* Developer Action Buttons */}
         <div className="flex items-center space-x-2 flex-shrink-0">
-          {/* Format Button (for XML / JSON) */}
-          {(syntaxType === "xml" || syntaxType === "json") && (
-            <button
-              onClick={() => formatContent()}
-              title={`Format ${syntaxType.toUpperCase()} (Indents syntax)`}
-              className="flex items-center space-x-1 px-2 py-1 rounded bg-[#16161a] hover:bg-[#202026] text-white text-[11px] border border-[#202026]"
-            >
-              <Sparkles className="w-3 h-3 text-blue-400" />
-              <span>Format</span>
-            </button>
-          )}
-
-          {/* Validate Button */}
-          {(syntaxType === "xml" || syntaxType === "json") && (
-            <button
-              onClick={() => validateContent()}
-              title={`Validate ${syntaxType.toUpperCase()} Syntax`}
-              className="flex items-center space-x-1 px-2 py-1 rounded bg-[#16161a] hover:bg-[#202026] text-white text-[11px] border border-[#202026]"
-            >
-              <CheckCircle className="w-3 h-3 text-emerald-400" />
-              <span>Validate</span>
-            </button>
-          )}
-
           {/* Search Toggle */}
           <button
             onClick={() => setShowSearchBox(!showSearchBox)}
@@ -312,36 +281,6 @@ export const LargeFileEditor: React.FC = () => {
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Validation Message Banner */}
-      {validationResult && (
-        <div
-          className={`px-3 py-1.5 flex items-center justify-between text-xs ${
-            validationResult.valid
-              ? "bg-emerald-950/30 text-emerald-300 border-b border-emerald-500/40"
-              : "bg-red-950/30 text-red-300 border-b border-red-500/40"
-          }`}
-        >
-          <div className="flex items-center space-x-2">
-            {validationResult.valid ? (
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-            ) : (
-              <AlertCircle className="w-3.5 h-3.5 text-red-400" />
-            )}
-            <span>
-              {validationResult.valid
-                ? `Valid ${syntaxType.toUpperCase()} Syntax`
-                : validationResult.error}
-            </span>
-          </div>
-          <button
-            onClick={() => useEditorStore.setState({ validationResult: null })}
-            className="text-gray-400 hover:text-white p-0.5"
-          >
-            <X className="w-3 h-3" />
-          </button>
         </div>
       )}
 

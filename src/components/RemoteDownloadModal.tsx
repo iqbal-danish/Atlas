@@ -158,7 +158,12 @@ export const RemoteDownloadModal: React.FC = () => {
             </span>
             <div className="flex items-center gap-3">
               {speedBytesPerSec > 0 && status === 'downloading' && (
-                <span className="text-muted/80">{formatBytes(speedBytesPerSec)}/s</span>
+                <div className="flex items-center gap-1.5 text-muted/80">
+                  <span>{formatBytes(speedBytesPerSec)}/s</span>
+                  <span className="text-[10px] text-muted/60">
+                    ({((speedBytesPerSec * 8) / (1024 * 1024)).toFixed(1)} Mbps)
+                  </span>
+                </div>
               )}
               <span className={`font-semibold ${appConfig.accentText}`}>{percent}%</span>
             </div>

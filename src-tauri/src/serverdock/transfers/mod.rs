@@ -533,7 +533,7 @@ impl TransferEngine {
         }
 
         // Dedicated disk writer task on blocking thread pool
-        let (tx, mut rx) = tokio::sync::mpsc::channel::<(u64, Vec<u8>)>(512);
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<(u64, Vec<u8>)>(1024);
         let writer_dest = dest_path.clone();
 
         let writer_handle = tokio::task::spawn_blocking(move || -> Result<(), String> {
@@ -557,9 +557,9 @@ impl TransferEngine {
             Ok(())
         });
 
-        // 256 in-flight pipelined requests of 32 KB each (8 MB sliding window matching SSH flow control)
-        let chunk_size: u64 = 32 * 1024;
-        let in_flight_concurrency = 256;
+        // 128 in-flight pipelined requests of 64 KB each (8 MB sliding window matching SSH flow control with reduced packet overhead)
+        let chunk_size: u64 = 64 * 1024;
+        let in_flight_concurrency = 128;
         let semaphore = Arc::new(tokio::sync::Semaphore::new(in_flight_concurrency));
 
         let transferred_atomic = Arc::new(std::sync::atomic::AtomicU64::new(item.transferred_bytes));
