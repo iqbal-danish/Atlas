@@ -23,6 +23,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useEditorStore } from '../serverdock/stores/editorStore';
+import { useRemoteDownloadStore } from '../stores/remoteDownloadStore';
 
 export interface ContextMenuProps {
   x: number;
@@ -121,7 +122,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
   const handleOpenDefault = async () => {
     if (entry) {
-      await api.openFile(entry.path);
+      if (entry.isRemote || entry.path.startsWith('remote://')) {
+        useRemoteDownloadStore.getState().startDownload({
+          appName: 'default',
+          remotePath: entry.path,
+          fileName: entry.name,
+          totalBytes: entry.size,
+          remoteProfileId: entry.remoteProfileId,
+        });
+      } else {
+        await api.openFile(entry.path);
+      }
     }
     onClose();
   };
@@ -183,10 +194,20 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               {/* UltraViewer */}
               <button
                 onClick={async () => {
-                  try {
-                    await api.openWithApp('ultraviewer', entry.path);
-                  } catch (e) {
-                    alert(`UltraViewer: ${e}`);
+                  if (entry.isRemote || entry.path.startsWith('remote://')) {
+                    useRemoteDownloadStore.getState().startDownload({
+                      appName: 'ultraviewer',
+                      remotePath: entry.path,
+                      fileName: entry.name,
+                      totalBytes: entry.size,
+                      remoteProfileId: entry.remoteProfileId,
+                    });
+                  } else {
+                    try {
+                      await api.openWithApp('ultraviewer', entry.path);
+                    } catch (e) {
+                      alert(`UltraViewer: ${e}`);
+                    }
                   }
                   onClose();
                 }}
@@ -203,10 +224,20 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               {/* FeedLens */}
               <button
                 onClick={async () => {
-                  try {
-                    await api.openWithApp('feedlens', entry.path);
-                  } catch (e) {
-                    alert(`FeedLens: ${e}`);
+                  if (entry.isRemote || entry.path.startsWith('remote://')) {
+                    useRemoteDownloadStore.getState().startDownload({
+                      appName: 'feedlens',
+                      remotePath: entry.path,
+                      fileName: entry.name,
+                      totalBytes: entry.size,
+                      remoteProfileId: entry.remoteProfileId,
+                    });
+                  } else {
+                    try {
+                      await api.openWithApp('feedlens', entry.path);
+                    } catch (e) {
+                      alert(`FeedLens: ${e}`);
+                    }
                   }
                   onClose();
                 }}
@@ -223,10 +254,20 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               {/* TransformLab */}
               <button
                 onClick={async () => {
-                  try {
-                    await api.openWithApp('transformlab', entry.path);
-                  } catch (e) {
-                    alert(`TransformLab: ${e}`);
+                  if (entry.isRemote || entry.path.startsWith('remote://')) {
+                    useRemoteDownloadStore.getState().startDownload({
+                      appName: 'transformlab',
+                      remotePath: entry.path,
+                      fileName: entry.name,
+                      totalBytes: entry.size,
+                      remoteProfileId: entry.remoteProfileId,
+                    });
+                  } else {
+                    try {
+                      await api.openWithApp('transformlab', entry.path);
+                    } catch (e) {
+                      alert(`TransformLab: ${e}`);
+                    }
                   }
                   onClose();
                 }}
@@ -243,7 +284,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               {/* ServerDock XML/JSON Viewer */}
               <button
                 onClick={() => {
-                  useEditorStore.getState().openFile(entry.path, entry.name, false);
+                  useEditorStore.getState().openFile(
+                    entry.path,
+                    entry.name,
+                    Boolean(entry.isRemote || entry.path.startsWith('remote://'))
+                  );
                   setLargeFileEditorOpen(true);
                   onClose();
                 }}

@@ -207,6 +207,8 @@ pub async fn exit_app(
     })
     .await;
 
+    let _ = crate::fs_service::clean_remote_cache();
+
     app_handle.exit(0);
     std::process::exit(0);
 }

@@ -27,6 +27,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .setup(|app| {
+            let _ = fs_service::clean_remote_cache();
             let serverdock_state = serverdock::init_serverdock_state(app.handle());
             app.manage(serverdock_state);
 
@@ -36,6 +37,11 @@ pub fn run() {
                 let _ = window.set_focus();
             }
             Ok(())
+        })
+        .on_window_event(|_window, event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                let _ = fs_service::clean_remote_cache();
+            }
         })
         .manage(AppState {
             db: Mutex::new(db),
@@ -52,6 +58,9 @@ pub fn run() {
             commands::delete_entries,
             commands::open_file,
             commands::open_with_app,
+            commands::get_remote_cache_path,
+            commands::check_cached_remote_file,
+            commands::clean_remote_cache,
             commands::get_file_preview,
             commands::read_file_base64,
             commands::copy_entries,

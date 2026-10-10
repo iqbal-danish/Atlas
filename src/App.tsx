@@ -18,6 +18,7 @@ import { OperationsDrawer } from './components/OperationsDrawer';
 import { StorageConnectionsModal } from './components/StorageConnectionsModal';
 import { QuickAuthModal } from './components/QuickAuthModal';
 import { LargeFileEditorModal } from './components/LargeFileEditorModal';
+import { RemoteDownloadModal } from './components/RemoteDownloadModal';
 import { ServerDockView } from './serverdock/ServerDockView';
 
 export function App() {
@@ -272,6 +273,7 @@ export function App() {
       <StorageConnectionsModal />
       <QuickAuthModal />
       <LargeFileEditorModal />
+      <RemoteDownloadModal />
     </div>
   );
 }

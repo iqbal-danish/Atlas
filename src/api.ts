@@ -62,6 +62,8 @@ export const api = {
           extension: item.name.includes('.') ? item.name.split('.').pop() : undefined,
           modifiedTime: item.modifiedTime,
           createdTime: item.modifiedTime,
+          isRemote: true,
+          remoteProfileId: profileId,
         }));
 
         return {
@@ -126,6 +128,18 @@ export const api = {
 
   openWithApp: async (appName: 'ultraviewer' | 'feedlens' | 'transformlab', path: string): Promise<void> => {
     return await invoke('open_with_app', { appName, path });
+  },
+
+  getRemoteCachePath: async (remotePath: string, fileName: string): Promise<string> => {
+    return await invoke('get_remote_cache_path', { remotePath, fileName });
+  },
+
+  checkCachedRemoteFile: async (cachedPath: string, expectedSize: number): Promise<boolean> => {
+    return await invoke('check_cached_remote_file', { cachedPath, expectedSize });
+  },
+
+  cleanRemoteCache: async (): Promise<void> => {
+    return await invoke('clean_remote_cache');
   },
 
   getFilePreview: async (

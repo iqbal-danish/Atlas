@@ -26,6 +26,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useEditorStore } from '../serverdock/stores/editorStore';
+import { useRemoteDownloadStore } from '../stores/remoteDownloadStore';
 import { SpreadsheetModal } from './SpreadsheetModal';
 
 interface FastFuzzyFinderProps {
@@ -331,7 +332,16 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
 
   const handleOpenExternal = (result: FuzzyResult) => {
     setContextMenu(null);
-    api.openFile(result.path).catch(console.error);
+    if (result.path.startsWith('remote://')) {
+      useRemoteDownloadStore.getState().startDownload({
+        appName: 'default',
+        remotePath: result.path,
+        fileName: result.name,
+        totalBytes: result.size || 0,
+      });
+    } else {
+      api.openFile(result.path).catch(console.error);
+    }
     onClose();
   };
 
@@ -716,10 +726,19 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
                 {/* UltraViewer */}
                 <button
                   onClick={async () => {
-                    try {
-                      await api.openWithApp('ultraviewer', contextMenu.result.path);
-                    } catch (e) {
-                      alert(`UltraViewer: ${e}`);
+                    if (contextMenu.result.path.startsWith('remote://')) {
+                      useRemoteDownloadStore.getState().startDownload({
+                        appName: 'ultraviewer',
+                        remotePath: contextMenu.result.path,
+                        fileName: contextMenu.result.name,
+                        totalBytes: contextMenu.result.size || 0,
+                      });
+                    } else {
+                      try {
+                        await api.openWithApp('ultraviewer', contextMenu.result.path);
+                      } catch (e) {
+                        alert(`UltraViewer: ${e}`);
+                      }
                     }
                     setContextMenu(null);
                     onClose();
@@ -737,10 +756,19 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
                 {/* FeedLens */}
                 <button
                   onClick={async () => {
-                    try {
-                      await api.openWithApp('feedlens', contextMenu.result.path);
-                    } catch (e) {
-                      alert(`FeedLens: ${e}`);
+                    if (contextMenu.result.path.startsWith('remote://')) {
+                      useRemoteDownloadStore.getState().startDownload({
+                        appName: 'feedlens',
+                        remotePath: contextMenu.result.path,
+                        fileName: contextMenu.result.name,
+                        totalBytes: contextMenu.result.size || 0,
+                      });
+                    } else {
+                      try {
+                        await api.openWithApp('feedlens', contextMenu.result.path);
+                      } catch (e) {
+                        alert(`FeedLens: ${e}`);
+                      }
                     }
                     setContextMenu(null);
                     onClose();
@@ -758,10 +786,19 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
                 {/* TransformLab */}
                 <button
                   onClick={async () => {
-                    try {
-                      await api.openWithApp('transformlab', contextMenu.result.path);
-                    } catch (e) {
-                      alert(`TransformLab: ${e}`);
+                    if (contextMenu.result.path.startsWith('remote://')) {
+                      useRemoteDownloadStore.getState().startDownload({
+                        appName: 'transformlab',
+                        remotePath: contextMenu.result.path,
+                        fileName: contextMenu.result.name,
+                        totalBytes: contextMenu.result.size || 0,
+                      });
+                    } else {
+                      try {
+                        await api.openWithApp('transformlab', contextMenu.result.path);
+                      } catch (e) {
+                        alert(`TransformLab: ${e}`);
+                      }
                     }
                     setContextMenu(null);
                     onClose();
@@ -779,7 +816,11 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
                 {/* ServerDock XML/JSON Viewer */}
                 <button
                   onClick={() => {
-                    useEditorStore.getState().openFile(contextMenu.result.path, contextMenu.result.name, false);
+                    useEditorStore.getState().openFile(
+                      contextMenu.result.path,
+                      contextMenu.result.name,
+                      Boolean(contextMenu.result.path.startsWith('remote://'))
+                    );
                     setLargeFileEditorOpen(true);
                     setContextMenu(null);
                     onClose();

@@ -58,6 +58,21 @@ pub fn open_with_app(app_name: String, path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn get_remote_cache_path(remote_path: String, file_name: String) -> Result<String, String> {
+    fs_service::get_remote_cache_path(&remote_path, &file_name)
+}
+
+#[tauri::command]
+pub fn check_cached_remote_file(cached_path: String, expected_size: u64) -> Result<bool, String> {
+    fs_service::check_cached_remote_file(&cached_path, expected_size)
+}
+
+#[tauri::command]
+pub fn clean_remote_cache() -> Result<(), String> {
+    fs_service::clean_remote_cache()
+}
+
+#[tauri::command]
 pub fn get_file_preview(path: String, max_bytes: Option<usize>) -> Result<FilePreview, String> {
     preview_service::generate_preview(&path, max_bytes.unwrap_or(256 * 1024))
 }

@@ -10,8 +10,13 @@ import {
   Info,
   GitCompare,
   Terminal,
+  Activity,
+  Zap,
+  FileCode,
 } from "lucide-react";
 import { FileItem } from "../../types";
+import { api } from "../../../api";
+import { useRemoteDownloadStore } from "../../../stores/remoteDownloadStore";
 
 interface FileContextMenuProps {
   x: number;
@@ -105,6 +110,84 @@ export const FileContextMenu: React.FC<FileContextMenuProps> = ({
             <span>Preview File</span>
           </button>
 
+          {/* UltraViewer */}
+          <button
+            onClick={async () => {
+              if (isRemote) {
+                useRemoteDownloadStore.getState().startDownload({
+                  appName: 'ultraviewer',
+                  remotePath: item.path,
+                  fileName: item.name,
+                  totalBytes: item.size,
+                });
+              } else {
+                try {
+                  await api.openWithApp('ultraviewer', item.path);
+                } catch (e) {
+                  alert(`UltraViewer: ${e}`);
+                }
+              }
+              onClose();
+            }}
+            className="w-full px-3 py-1.5 text-left text-white hover:bg-blue-600 flex items-center space-x-2"
+            title="Open in UltraViewer Large XML/JSON Editor"
+          >
+            <Eye className="w-3.5 h-3.5 text-amber-400" />
+            <span>UltraViewer</span>
+          </button>
+
+          {/* FeedLens */}
+          <button
+            onClick={async () => {
+              if (isRemote) {
+                useRemoteDownloadStore.getState().startDownload({
+                  appName: 'feedlens',
+                  remotePath: item.path,
+                  fileName: item.name,
+                  totalBytes: item.size,
+                });
+              } else {
+                try {
+                  await api.openWithApp('feedlens', item.path);
+                } catch (e) {
+                  alert(`FeedLens: ${e}`);
+                }
+              }
+              onClose();
+            }}
+            className="w-full px-3 py-1.5 text-left text-white hover:bg-blue-600 flex items-center space-x-2"
+            title="Open in FeedLens DuckDB Analyzer"
+          >
+            <Activity className="w-3.5 h-3.5 text-blue-400" />
+            <span>FeedLens</span>
+          </button>
+
+          {/* TransformLab */}
+          <button
+            onClick={async () => {
+              if (isRemote) {
+                useRemoteDownloadStore.getState().startDownload({
+                  appName: 'transformlab',
+                  remotePath: item.path,
+                  fileName: item.name,
+                  totalBytes: item.size,
+                });
+              } else {
+                try {
+                  await api.openWithApp('transformlab', item.path);
+                } catch (e) {
+                  alert(`TransformLab: ${e}`);
+                }
+              }
+              onClose();
+            }}
+            className="w-full px-3 py-1.5 text-left text-white hover:bg-blue-600 flex items-center space-x-2"
+            title="Open in TransformLab XSLT 3.0 / JOLT"
+          >
+            <Zap className="w-3.5 h-3.5 text-emerald-400" />
+            <span>TransformLab</span>
+          </button>
+
           <button
             onClick={() => {
               onOpenEditor();
@@ -112,8 +195,8 @@ export const FileContextMenu: React.FC<FileContextMenuProps> = ({
             }}
             className="w-full px-3 py-1.5 text-left text-white hover:bg-blue-600 flex items-center space-x-2 font-medium"
           >
-            <Edit3 className="w-3.5 h-3.5 text-blue-400" />
-            <span>Open in Large-File Editor</span>
+            <FileCode className="w-3.5 h-3.5 text-purple-400" />
+            <span>XML/JSON Viewer</span>
           </button>
         </>
       )}

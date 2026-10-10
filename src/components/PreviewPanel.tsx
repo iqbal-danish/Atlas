@@ -29,6 +29,7 @@ import {
 
 import { SpreadsheetModal } from './SpreadsheetModal';
 import { useEditorStore } from '../serverdock/stores/editorStore';
+import { useRemoteDownloadStore } from '../stores/remoteDownloadStore';
 
 interface PreviewPanelProps {
   tabId: string;
@@ -541,21 +542,57 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({ tabId }) => {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
-                          onClick={() => api.openWithApp('ultraviewer', selectedEntry.path)}
+                          onClick={() => {
+                            if (selectedEntry.isRemote || selectedEntry.path.startsWith('remote://')) {
+                              useRemoteDownloadStore.getState().startDownload({
+                                appName: 'ultraviewer',
+                                remotePath: selectedEntry.path,
+                                fileName: selectedEntry.name,
+                                totalBytes: selectedEntry.size,
+                                remoteProfileId: selectedEntry.remoteProfileId,
+                              });
+                            } else {
+                              api.openWithApp('ultraviewer', selectedEntry.path);
+                            }
+                          }}
                           className="px-1.5 py-0.5 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-[10px] font-medium transition"
                           title="Open in UltraViewer (Large XML/JSON Editor)"
                         >
                           UltraViewer
                         </button>
                         <button
-                          onClick={() => api.openWithApp('feedlens', selectedEntry.path)}
+                          onClick={() => {
+                            if (selectedEntry.isRemote || selectedEntry.path.startsWith('remote://')) {
+                              useRemoteDownloadStore.getState().startDownload({
+                                appName: 'feedlens',
+                                remotePath: selectedEntry.path,
+                                fileName: selectedEntry.name,
+                                totalBytes: selectedEntry.size,
+                                remoteProfileId: selectedEntry.remoteProfileId,
+                              });
+                            } else {
+                              api.openWithApp('feedlens', selectedEntry.path);
+                            }
+                          }}
                           className="px-1.5 py-0.5 rounded bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-[10px] font-medium transition"
                           title="Open in FeedLens (Feed Analyzer & DuckDB)"
                         >
                           FeedLens
                         </button>
                         <button
-                          onClick={() => api.openWithApp('transformlab', selectedEntry.path)}
+                          onClick={() => {
+                            if (selectedEntry.isRemote || selectedEntry.path.startsWith('remote://')) {
+                              useRemoteDownloadStore.getState().startDownload({
+                                appName: 'transformlab',
+                                remotePath: selectedEntry.path,
+                                fileName: selectedEntry.name,
+                                totalBytes: selectedEntry.size,
+                                remoteProfileId: selectedEntry.remoteProfileId,
+                              });
+                            } else {
+                              api.openWithApp('transformlab', selectedEntry.path);
+                            }
+                          }}
                           className="px-1.5 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-medium transition"
                           title="Open in TransformLab (XSLT 3.0 / JOLT)"
                         >
@@ -564,7 +601,11 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({ tabId }) => {
                         <button
                           onClick={() => {
                             if (selectedEntry) {
-                              useEditorStore.getState().openFile(selectedEntry.path, selectedEntry.name, false);
+                              useEditorStore.getState().openFile(
+                                selectedEntry.path,
+                                selectedEntry.name,
+                                Boolean(selectedEntry.isRemote || selectedEntry.path.startsWith('remote://'))
+                              );
                               setLargeFileEditorOpen(true);
                             }
                           }}

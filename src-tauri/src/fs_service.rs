@@ -403,6 +403,51 @@ pub fn open_with_app(app_name: &str, file_path: &str) -> Result<(), String> {
     Ok(())
 }
 
+pub fn get_remote_cache_dir() -> std::path::PathBuf {
+    let dir = std::env::temp_dir().join("Atlas").join("remote_cache");
+    let _ = std::fs::create_dir_all(&dir);
+    dir
+}
+
+pub fn get_remote_cache_path(remote_path: &str, file_name: &str) -> Result<String, String> {
+    let cache_dir = get_remote_cache_dir();
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    std::hash::Hash::hash(remote_path, &mut hasher);
+    let hash = format!("{:x}", std::hash::Hasher::finish(&hasher));
+    let hash_prefix = if hash.len() > 8 { &hash[..8] } else { &hash };
+
+    let safe_name: String = file_name
+        .chars()
+        .map(|c| if c.is_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' })
+        .collect();
+
+    let target_file = format!("{}_{}", hash_prefix, safe_name);
+    let target_path = cache_dir.join(target_file);
+    Ok(target_path.to_string_lossy().to_string())
+}
+
+pub fn check_cached_remote_file(cached_path: &str, expected_size: u64) -> Result<bool, String> {
+    let path = Path::new(cached_path);
+    if path.exists() && path.is_file() {
+        if expected_size == 0 {
+            return Ok(true);
+        }
+        if let Ok(meta) = std::fs::metadata(path) {
+            return Ok(meta.len() == expected_size);
+        }
+    }
+    Ok(false)
+}
+
+pub fn clean_remote_cache() -> Result<(), String> {
+    let dir = std::env::temp_dir().join("Atlas").join("remote_cache");
+    if dir.exists() {
+        let _ = std::fs::remove_dir_all(&dir);
+        let _ = std::fs::create_dir_all(&dir);
+    }
+    Ok(())
+}
+
 pub fn show_in_explorer(path_str: &str) -> Result<(), String> {
     let path = Path::new(path_str);
     if !path.exists() {
