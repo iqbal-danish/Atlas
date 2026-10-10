@@ -499,32 +499,33 @@ export const ListView: React.FC<ListViewProps> = ({ tabId }) => {
       <div className="flex items-center px-4 py-2 border-b border-white/[0.06] bg-[#111219] text-[11px] font-semibold text-slate-400 uppercase tracking-wider select-none">
         <div
           onClick={() => handleSort('name')}
-          className="flex-1 flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition"
+          className="w-[340px] shrink-0 flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition"
         >
           <span>Name</span>
           {sortField === 'name' && <ArrowUpDown className="w-3 h-3 text-slate-300" />}
         </div>
         <div
           onClick={() => handleSort('modifiedTime')}
-          className="w-44 flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition"
+          className="w-52 shrink-0 flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition"
         >
           <span>Date modified</span>
           {sortField === 'modifiedTime' && <ArrowUpDown className="w-3 h-3 text-slate-300" />}
         </div>
         <div
           onClick={() => handleSort('extension')}
-          className="w-40 flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition"
+          className="w-40 shrink-0 flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition"
         >
           <span>Kind</span>
           {sortField === 'extension' && <ArrowUpDown className="w-3 h-3 text-slate-300" />}
         </div>
         <div
           onClick={() => handleSort('size')}
-          className="w-28 text-right flex items-center justify-end gap-1.5 cursor-pointer hover:text-slate-200 transition"
+          className="w-28 shrink-0 text-right flex items-center justify-end gap-1.5 cursor-pointer hover:text-slate-200 transition"
         >
           <span>Size</span>
           {sortField === 'size' && <ArrowUpDown className="w-3 h-3 text-slate-300" />}
         </div>
+        <div className="flex-1" />
       </div>
 
       {/* Table Rows Body */}
@@ -558,8 +559,8 @@ export const ListView: React.FC<ListViewProps> = ({ tabId }) => {
                     : 'hover:bg-white/[0.04] text-slate-200'
                 }`}
               >
-                {/* Name & Quick Action Rail */}
-                <div className="flex-1 flex items-center gap-2.5 truncate pr-2 min-w-0">
+                {/* Name */}
+                <div className="w-[340px] shrink-0 flex items-center gap-2.5 truncate pr-3 min-w-0">
                   {getEntryIcon(entry)}
                   {isRenaming ? (
                     <input
@@ -578,50 +579,50 @@ export const ListView: React.FC<ListViewProps> = ({ tabId }) => {
                   ) : (
                     <span className="truncate">{entry.name}</span>
                   )}
-
-                  {/* On-Hover Action Rail */}
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 ml-auto shrink-0 pr-1">
-                    <button
-                      onClick={(e) => handleQuickPreview(e, entry)}
-                      className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 text-[10px] flex items-center gap-1 transition"
-                      title="Quick Preview (Space)"
-                    >
-                      <Eye className="w-3 h-3 text-slate-400" />
-                      <span>Preview</span>
-                    </button>
-                    <button
-                      onClick={(e) => handleCopyPath(e, entry.path)}
-                      className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 text-[10px] flex items-center gap-1 transition"
-                      title="Copy full path"
-                    >
-                      {copiedPath === entry.path ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-emerald-300">Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3 text-slate-400" />
-                          <span>Copy</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
                 </div>
 
                 {/* Date Modified */}
-                <div className="w-44 text-slate-400 font-mono truncate text-[11px]">
+                <div className="w-52 shrink-0 text-slate-400 font-mono truncate text-[11px] pr-2">
                   {formatDate(entry.modifiedTime)}
                 </div>
 
                 {/* Kind / Descriptive Type */}
-                <div className="w-40 text-slate-400 truncate text-[11px]">
+                <div className="w-40 shrink-0 text-slate-400 truncate text-[11px] pr-2">
                   {getEntryKind(entry)}
                 </div>
 
                 {/* Size */}
-                <div className="w-28 text-right text-slate-400 font-mono text-[11px] tabular-nums">
+                <div className="w-28 shrink-0 text-right text-slate-400 font-mono text-[11px] tabular-nums">
                   {entry.isDir ? (entry.itemCount ? `${entry.itemCount} items` : '--') : formatBytes(entry.size)}
+                </div>
+
+                {/* Trailing Space with On-Hover Action Rail */}
+                <div className="flex-1 flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity pl-4 pr-1">
+                  <button
+                    onClick={(e) => handleQuickPreview(e, entry)}
+                    className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 text-[10px] flex items-center gap-1 transition mr-1"
+                    title="Quick Preview (Space)"
+                  >
+                    <Eye className="w-3 h-3 text-slate-400" />
+                    <span>Preview</span>
+                  </button>
+                  <button
+                    onClick={(e) => handleCopyPath(e, entry.path)}
+                    className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 text-[10px] flex items-center gap-1 transition"
+                    title="Copy full path"
+                  >
+                    {copiedPath === entry.path ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-400" />
+                        <span className="text-emerald-300">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3 text-slate-400" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             );
