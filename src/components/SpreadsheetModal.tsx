@@ -8,6 +8,11 @@ import {
   Maximize2,
   Copy,
   Check,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Layers,
+  BarChart2,
 } from 'lucide-react';
 import { api } from '../api';
 
@@ -39,6 +44,8 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>({ row: 0, col: 0 });
   const [copiedCell, setCopiedCell] = useState(false);
+  const [copiedRow, setCopiedRow] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ col: number; direction: 'asc' | 'desc' } | null>(null);
 
   // Escape key listener to close modal
   useEffect(() => {
@@ -128,16 +135,50 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
     return letter;
   };
 
-  // Filtered rows based on search
-  const filteredRows = useMemo(() => {
+  // Filtered and sorted rows
+  const processedRows = useMemo(() => {
     if (!activeSheet) return [];
-    if (!searchFilter.trim()) return activeSheet.rows;
+    let rows = activeSheet.rows;
 
-    const q = searchFilter.toLowerCase();
-    return activeSheet.rows.filter((row) =>
-      row.some((cell) => cell.toLowerCase().includes(q))
-    );
-  }, [activeSheet, searchFilter]);
+    if (searchFilter.trim()) {
+      const q = searchFilter.toLowerCase();
+      rows = rows.filter((row) =>
+        row.some((cell) => cell.toLowerCase().includes(q))
+      );
+    }
+
+    if (sortConfig) {
+      const { col, direction } = sortConfig;
+      rows = [...rows].sort((a, b) => {
+        const valA = (a[col] || '').trim();
+        const valB = (b[col] || '').trim();
+        const numA = Number(valA.replace(/,/g, ''));
+        const numB = Number(valB.replace(/,/g, ''));
+        const bothNumeric = !isNaN(numA) && !isNaN(numB) && valA !== '' && valB !== '';
+
+        if (bothNumeric) {
+          return direction === 'asc' ? numA - numB : numB - numA;
+        }
+        return direction === 'asc'
+          ? valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' })
+          : valB.localeCompare(valA, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    }
+
+    return rows;
+  }, [activeSheet, searchFilter, sortConfig]);
+
+  const handleToggleSort = (colIdx: number) => {
+    setSortConfig((prev) => {
+      if (!prev || prev.col !== colIdx) {
+        return { col: colIdx, direction: 'asc' };
+      }
+      if (prev.direction === 'asc') {
+        return { col: colIdx, direction: 'desc' };
+      }
+      return null;
+    });
+  };
 
   // Selected cell value
   const selectedCellValue = useMemo(() => {
@@ -145,9 +186,55 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
     if (selectedCell.row === -1) {
       return activeSheet.headers[selectedCell.col] || '';
     }
-    const r = filteredRows[selectedCell.row];
+    const r = processedRows[selectedCell.row];
     return r ? r[selectedCell.col] || '' : '';
-  }, [selectedCell, activeSheet, filteredRows]);
+  }, [selectedCell, activeSheet, processedRows]);
+
+  // Real-time Column Statistics (Status Bar telemetry)
+  const columnStats = useMemo(() => {
+    if (!activeSheet || selectedCell === null) return null;
+    const colIdx = selectedCell.col;
+    const headerName = activeSheet.headers[colIdx] || getColLetter(colIdx);
+
+    const values = processedRows.map((r) => (r[colIdx] || '').trim()).filter((v) => v !== '');
+    const count = values.length;
+    if (count === 0) {
+      return { headerName, colLetter: getColLetter(colIdx), count: 0, distinct: 0, isNumeric: false };
+    }
+
+    const uniqueSet = new Set(values);
+    const distinct = uniqueSet.size;
+
+    let numericCount = 0;
+    let sum = 0;
+    let min = Infinity;
+    let max = -Infinity;
+
+    for (const v of values) {
+      const num = Number(v.replace(/,/g, ''));
+      if (!isNaN(num)) {
+        numericCount++;
+        sum += num;
+        if (num < min) min = num;
+        if (num > max) max = num;
+      }
+    }
+
+    const isNumeric = numericCount === count && count > 0;
+    const avg = isNumeric ? sum / count : 0;
+
+    return {
+      headerName,
+      colLetter: getColLetter(colIdx),
+      count,
+      distinct,
+      isNumeric,
+      sum: isNumeric ? sum : null,
+      avg: isNumeric ? avg : null,
+      min: isNumeric ? min : null,
+      max: isNumeric ? max : null,
+    };
+  }, [activeSheet, selectedCell, processedRows]);
 
   const handleCopyCell = () => {
     if (selectedCellValue) {
@@ -156,6 +243,16 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
         setTimeout(() => setCopiedCell(false), 1500);
       });
     }
+  };
+
+  const handleCopyRow = () => {
+    if (!selectedCell || selectedCell.row < 0 || !processedRows[selectedCell.row]) return;
+    const row = processedRows[selectedCell.row];
+    const tsv = row.join('\t');
+    navigator.clipboard.writeText(tsv).then(() => {
+      setCopiedRow(true);
+      setTimeout(() => setCopiedRow(false), 1500);
+    });
   };
 
   const handleExportCsv = () => {
@@ -269,13 +366,25 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
           <div className="flex-1 bg-white/[0.03] border border-white/10 rounded px-3 py-1 font-mono text-slate-200 text-xs truncate">
             {selectedCellValue || <span className="text-slate-600 italic">Empty cell</span>}
           </div>
-          <button
-            onClick={handleCopyCell}
-            className="p-1.5 rounded hover:bg-white/10 text-slate-400 hover:text-white shrink-0"
-            title="Copy cell value"
-          >
-            {copiedCell ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={handleCopyCell}
+              className="p-1.5 px-2 rounded hover:bg-white/10 text-slate-400 hover:text-white shrink-0 flex items-center gap-1 text-xs"
+              title="Copy cell value (Ctrl+C)"
+            >
+              {copiedCell ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span className="text-[10px] hidden sm:inline">Cell</span>
+            </button>
+            <button
+              onClick={handleCopyRow}
+              disabled={!selectedCell || selectedCell.row < 0}
+              className="p-1.5 px-2 rounded hover:bg-white/10 text-slate-400 hover:text-white shrink-0 flex items-center gap-1 text-xs disabled:opacity-30 disabled:hover:bg-transparent"
+              title="Copy entire row as TSV (ready to paste into Excel or ChatGPT)"
+            >
+              {copiedRow ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Layers className="w-3.5 h-3.5" />}
+              <span className="text-[10px] hidden sm:inline">Row</span>
+            </button>
+          </div>
         </div>
 
         {/* Main Grid Stage */}
@@ -291,7 +400,7 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
               <thead className="sticky top-0 z-10 bg-[#141724] border-b border-white/10 text-slate-300 font-semibold shadow-sm">
                 {/* Excel Letter Row */}
                 <tr className="bg-[#101320] text-slate-500 font-mono text-[10px]">
-                  <th className="p-1.5 px-3 text-center border-r border-b border-white/10 w-12 bg-[#0c0e18] select-none"></th>
+                  <th className="p-1.5 px-3 text-center border-r border-b border-white/10 w-12 bg-[#0c0e18] select-none sticky left-0 z-20"></th>
                   {activeSheet.headers.map((_, colIdx) => (
                     <th key={colIdx} className="p-1 text-center border-r border-b border-white/10 select-none">
                       {getColLetter(colIdx)}
@@ -299,29 +408,48 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
                   ))}
                 </tr>
 
-                {/* Header Labels */}
+                {/* Header Labels with Click-to-Sort */}
                 <tr>
-                  <th className="p-2 px-3 text-center border-r border-white/10 text-slate-500 font-mono text-[10px] w-12 bg-[#101320] select-none">
+                  <th className="p-2 px-3 text-center border-r border-white/10 text-slate-500 font-mono text-[10px] w-12 bg-[#101320] select-none sticky left-0 z-20">
                     1
                   </th>
-                  {activeSheet.headers.map((header, colIdx) => (
-                    <th
-                      key={colIdx}
-                      onClick={() => setSelectedCell({ row: -1, col: colIdx })}
-                      className={`p-2 px-3 text-left border-r border-white/10 font-semibold truncate max-w-[200px] cursor-pointer hover:bg-white/[0.04] transition ${
-                        selectedCell?.row === -1 && selectedCell?.col === colIdx ? 'bg-emerald-500/15 text-emerald-200' : ''
-                      }`}
-                      title={header}
-                    >
-                      {header}
-                    </th>
-                  ))}
+                  {activeSheet.headers.map((header, colIdx) => {
+                    const isSorted = sortConfig?.col === colIdx;
+                    return (
+                      <th
+                        key={colIdx}
+                        onClick={() => {
+                          setSelectedCell({ row: -1, col: colIdx });
+                          handleToggleSort(colIdx);
+                        }}
+                        className={`p-2 px-3 text-left border-r border-white/10 font-semibold truncate max-w-[200px] cursor-pointer hover:bg-white/[0.06] transition select-none group ${
+                          selectedCell?.col === colIdx ? 'bg-emerald-500/15 text-emerald-200' : ''
+                        }`}
+                        title={`Click to sort by "${header}"`}
+                      >
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="truncate">{header}</span>
+                          <span className="shrink-0 text-slate-400">
+                            {isSorted ? (
+                              sortConfig?.direction === 'asc' ? (
+                                <ArrowUp className="w-3 h-3 text-emerald-400" />
+                              ) : (
+                                <ArrowDown className="w-3 h-3 text-emerald-400" />
+                              )
+                            ) : (
+                              <ArrowUpDown className="w-2.5 h-2.5 opacity-0 group-hover:opacity-60 transition" />
+                            )}
+                          </span>
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
 
               {/* Data Rows */}
               <tbody className="divide-y divide-white/[0.03] font-mono text-[11px] text-slate-300">
-                {filteredRows.map((row, rowIdx) => {
+                {processedRows.map((row, rowIdx) => {
                   const isRowSelected = selectedCell?.row === rowIdx;
 
                   return (
@@ -331,8 +459,8 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
                         rowIdx % 2 === 1 ? 'bg-white/[0.012]' : ''
                       } ${isRowSelected ? 'bg-white/[0.05]' : ''}`}
                     >
-                      {/* Row Number */}
-                      <td className="p-1.5 px-3 text-center font-mono text-[10px] text-slate-500 border-r border-white/10 bg-[#0e111a] select-none">
+                      {/* Sticky Row Number */}
+                      <td className="p-1.5 px-3 text-center font-mono text-[10px] text-slate-500 border-r border-white/10 bg-[#0e111a] select-none sticky left-0 z-[5]">
                         {rowIdx + 2}
                       </td>
 
@@ -365,15 +493,16 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
           )}
         </div>
 
-        {/* Bottom Sheet Selector Bar (Multi-sheet tabs) */}
-        <div className="px-5 py-2 bg-[#12141f] border-t border-white/[0.08] flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 overflow-x-auto">
+        {/* Bottom Sheet Selector Bar & Live Column Statistics */}
+        <div className="px-5 py-2 bg-[#12141f] border-t border-white/[0.08] flex items-center justify-between text-xs gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto shrink-0">
             {sheets.map((sheet, idx) => (
               <button
                 key={idx}
                 onClick={() => {
                   setActiveSheetIndex(idx);
                   setSelectedCell({ row: 0, col: 0 });
+                  setSortConfig(null);
                 }}
                 className={`px-3 py-1 rounded font-medium text-xs transition flex items-center gap-1.5 ${
                   activeSheetIndex === idx
@@ -387,8 +516,29 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
             ))}
           </div>
 
-          <div className="text-[11px] text-slate-500 font-mono">
-            Showing {filteredRows.length} of {activeSheet?.totalRows || 0} rows
+          <div className="flex items-center gap-4 shrink-0">
+            {columnStats && (
+              <div className="hidden lg:flex items-center gap-2.5 font-mono text-[10px] text-slate-400 bg-white/[0.03] px-2.5 py-1 rounded-lg border border-white/[0.06]">
+                <div className="flex items-center gap-1 text-emerald-400 font-semibold">
+                  <BarChart2 className="w-3 h-3" />
+                  <span>Col {columnStats.colLetter}:</span>
+                </div>
+                <span>Count: <strong className="text-white">{columnStats.count}</strong></span>
+                <span>Distinct: <strong className="text-white">{columnStats.distinct}</strong></span>
+                {columnStats.isNumeric && (
+                  <>
+                    <span>Sum: <strong className="text-white">{columnStats.sum?.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong></span>
+                    <span>Avg: <strong className="text-white">{columnStats.avg?.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong></span>
+                    <span>Min: <strong className="text-white">{columnStats.min?.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong></span>
+                    <span>Max: <strong className="text-white">{columnStats.max?.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong></span>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="text-[11px] text-slate-500 font-mono">
+              Showing {processedRows.length} of {activeSheet?.totalRows || 0} rows
+            </div>
           </div>
         </div>
       </div>
