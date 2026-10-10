@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   FileSpreadsheet,
   Search,
@@ -39,6 +39,18 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>({ row: 0, col: 0 });
   const [copiedCell, setCopiedCell] = useState(false);
+
+  // Escape key listener to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, onClose]);
 
   // Parse raw content into sheets
   const sheets = useMemo<SheetData[]>(() => {

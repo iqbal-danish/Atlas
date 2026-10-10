@@ -16,8 +16,8 @@ export const LargeFileEditorModal: React.FC = () => {
         setLargeFileEditorOpen(false);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [largeFileEditorOpen, setLargeFileEditorOpen]);
 
   if (!largeFileEditorOpen) return null;
@@ -45,7 +45,7 @@ export const LargeFileEditorModal: React.FC = () => {
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-white truncate text-sm" title={fileName}>
-                {fileName || 'Large File Editor'}
+                {fileName || 'XML/JSON Viewer'}
               </span>
               {isDirty && (
                 <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" title="Modified" />

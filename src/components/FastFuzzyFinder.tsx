@@ -495,7 +495,7 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
             onClose();
           }
         }}
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center pt-20 p-4 select-none animate-in fade-in duration-100"
+        className="fixed inset-0 z-50 bg-black/65 flex items-start justify-center pt-20 p-4 select-none animate-in fade-in duration-100"
       >
         <div
           onClick={(e) => {
@@ -812,7 +812,7 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
                   </div>
                 </button>
 
-                {/* ServerDock Large File Editor */}
+                {/* ServerDock XML/JSON Viewer */}
                 <button
                   onClick={() => {
                     useEditorStore.getState().openFile(contextMenu.result.path, contextMenu.result.name, false);
@@ -821,11 +821,11 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
                     onClose();
                   }}
                   className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.08] text-left transition-colors"
-                  title="Open in embedded Large File Editor"
+                  title="Open in embedded XML/JSON Viewer"
                 >
                   <FileCode className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                   <div className="flex flex-col min-w-0">
-                    <span className="font-medium text-slate-200 text-xs leading-none">Large File Editor</span>
+                    <span className="font-medium text-slate-200 text-xs leading-none">XML/JSON Viewer</span>
                     <span className="text-[9px] text-slate-400 truncate mt-0.5">Streaming Editor & Regex</span>
                   </div>
                 </button>

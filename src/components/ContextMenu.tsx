@@ -86,10 +86,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   }, [onClose]);
 
   // Adjust coordinates if menu would bleed offscreen
-  const menuWidth = 220;
-  const menuHeight = 360;
-  const adjustedX = Math.min(x, window.innerWidth - menuWidth - 8);
-  const adjustedY = Math.min(y, window.innerHeight - menuHeight - 8);
+  const menuWidth = 224;
+  const menuHeight = entry ? 570 : 360;
+  const adjustedX = Math.max(8, Math.min(x, window.innerWidth - menuWidth - 8));
+  const adjustedY = Math.max(8, Math.min(y, window.innerHeight - menuHeight - 16));
 
   const handleCopyPath = () => {
     if (entry) {
@@ -158,7 +158,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     <div
       ref={menuRef}
       style={{ left: adjustedX, top: adjustedY }}
-      className="fixed z-50 w-56 bg-surface/95 backdrop-blur-md border border-border/80 rounded-lg shadow-2xl py-1 text-xs select-none flex flex-col text-foreground animate-in fade-in zoom-in-95 duration-100"
+      className="fixed z-50 w-56 max-h-[calc(100vh-24px)] overflow-y-auto bg-surface/95 backdrop-blur-md border border-border/80 rounded-lg shadow-2xl py-1 text-xs select-none flex flex-col text-foreground animate-in fade-in zoom-in-95 duration-100"
     >
       {/* File-specific primary actions */}
       {entry && (
@@ -240,7 +240,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 </div>
               </button>
 
-              {/* ServerDock Large File Editor */}
+              {/* ServerDock XML/JSON Viewer */}
               <button
                 onClick={() => {
                   useEditorStore.getState().openFile(entry.path, entry.name, false);
@@ -248,11 +248,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   onClose();
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-hover text-left transition-colors"
-                title="Open in embedded Large File Editor"
+                title="Open in embedded XML/JSON Viewer"
               >
                 <FileCode className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                 <div className="flex flex-col min-w-0">
-                  <span className="font-medium text-foreground text-xs leading-none">Large File Editor</span>
+                  <span className="font-medium text-foreground text-xs leading-none">XML/JSON Viewer</span>
                   <span className="text-[9px] text-muted truncate mt-0.5">Streaming Editor & Regex</span>
                 </div>
               </button>

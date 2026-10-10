@@ -83,6 +83,18 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({ tabId }) => {
     };
   }, [pdfBlobUrl]);
 
+  // Escape key listener for expanded PDF view
+  useEffect(() => {
+    if (!isPdfExpanded) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsPdfExpanded(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isPdfExpanded]);
+
   useEffect(() => {
     if (!selectedEntry || selectedEntry.isDir) {
       setPreview(null);
@@ -322,7 +334,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({ tabId }) => {
                             setLargeFileEditorOpen(true);
                           }}
                           className="p-1 rounded text-muted hover:text-blue-400 hover:bg-surface"
-                          title="Open in Large File Editor (Streaming pagination, syntax validation & regex search)"
+                          title="Open in XML/JSON Viewer (Streaming pagination, syntax validation & regex search)"
                         >
                           <Sparkles className="w-3 h-3 text-blue-400" />
                         </button>
@@ -557,7 +569,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({ tabId }) => {
                             }
                           }}
                           className="p-1 rounded bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 transition"
-                          title="Open in embedded Large File Editor"
+                          title="Open in embedded XML/JSON Viewer"
                         >
                           <Sparkles className="w-3 h-3 text-purple-300" />
                         </button>
