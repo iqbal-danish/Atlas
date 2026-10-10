@@ -404,7 +404,10 @@ pub fn open_with_app(app_name: &str, file_path: &str) -> Result<(), String> {
 }
 
 pub fn get_remote_cache_dir() -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join("Atlas").join("remote_cache");
+    let dir = dirs::data_local_dir()
+        .unwrap_or_else(|| std::env::temp_dir())
+        .join("Atlas")
+        .join("remote_cache");
     let _ = std::fs::create_dir_all(&dir);
     dir
 }
@@ -440,10 +443,14 @@ pub fn check_cached_remote_file(cached_path: &str, expected_size: u64) -> Result
 }
 
 pub fn clean_remote_cache() -> Result<(), String> {
-    let dir = std::env::temp_dir().join("Atlas").join("remote_cache");
+    let dir = get_remote_cache_dir();
     if dir.exists() {
         let _ = std::fs::remove_dir_all(&dir);
         let _ = std::fs::create_dir_all(&dir);
+    }
+    let temp_legacy = std::env::temp_dir().join("Atlas").join("remote_cache");
+    if temp_legacy.exists() {
+        let _ = std::fs::remove_dir_all(&temp_legacy);
     }
     Ok(())
 }
@@ -930,7 +937,6 @@ pub fn extract_archive(path_str: &str, destination_str: &str) -> Result<usize, S
 }
 
 pub fn create_zip_archive(sources: Vec<String>, dest_zip_path: &str) -> Result<String, String> {
-    use std::io::Write;
     use zip::write::SimpleFileOptions;
 
     let dest_path = Path::new(dest_zip_path);

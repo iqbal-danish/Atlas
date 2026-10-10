@@ -532,34 +532,55 @@ impl TransferEngine {
             }
         }
 
-        // Dedicated disk writer task on blocking thread pool
-        let (tx, mut rx) = tokio::sync::mpsc::channel::<(u64, Vec<u8>)>(1024);
+        // Dedicated high-throughput disk writer task
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<(u64, Vec<u8>)>(2048);
         let writer_dest = dest_path.clone();
 
         let writer_handle = tokio::task::spawn_blocking(move || -> Result<(), String> {
             use std::fs::OpenOptions;
-            use std::io::{Seek, SeekFrom, Write};
 
-            let mut file = OpenOptions::new()
+            let file = OpenOptions::new()
+                .read(true)
                 .write(true)
                 .open(&writer_dest)
                 .map_err(|e| format!("Failed to open local destination for writing: {e}"))?;
 
-            while let Some((offset, chunk)) = rx.blocking_recv() {
-                file.seek(SeekFrom::Start(offset))
-                    .map_err(|e| format!("Failed to seek local file: {e}"))?;
-                file.write_all(&chunk)
-                    .map_err(|e| format!("Failed to write to local file: {e}"))?;
+            if total_size > 0 {
+                // Zero-overhead memory-mapped write: RAM-speed direct copying with OS dirty-page writeback
+                let mut mmap = unsafe { memmap2::MmapMut::map_mut(&file) }
+                    .map_err(|e| format!("Failed to memory-map local destination: {e}"))?;
+
+                let mmap_len = mmap.len();
+                while let Some((offset, chunk)) = rx.blocking_recv() {
+                    let start = offset as usize;
+                    let end = start + chunk.len();
+                    if end <= mmap_len {
+                        mmap[start..end].copy_from_slice(&chunk);
+                    }
+                }
+
+                mmap.flush()
+                    .map_err(|e| format!("Failed to flush memory-mapped file: {e}"))?;
+            } else {
+                // Fallback for dynamic/streamed sizes without predetermined total_size
+                use std::io::{Seek, SeekFrom, Write};
+                let mut file = file;
+                while let Some((offset, chunk)) = rx.blocking_recv() {
+                    file.seek(SeekFrom::Start(offset))
+                        .map_err(|e| format!("Failed to seek local file: {e}"))?;
+                    file.write_all(&chunk)
+                        .map_err(|e| format!("Failed to write to local file: {e}"))?;
+                }
+                file.flush()
+                    .map_err(|e| format!("Failed to flush local file: {e}"))?;
             }
 
-            file.flush()
-                .map_err(|e| format!("Failed to flush local file: {e}"))?;
             Ok(())
         });
 
-        // 128 in-flight pipelined requests of 64 KB each (8 MB sliding window matching SSH flow control with reduced packet overhead)
-        let chunk_size: u64 = 64 * 1024;
-        let in_flight_concurrency = 128;
+        // 256 in-flight pipelined requests of 32 KB each (8 MB sliding window matching OpenSSH SSH_FXP_READ packet spec)
+        let chunk_size: u64 = 32 * 1024;
+        let in_flight_concurrency = 256;
         let semaphore = Arc::new(tokio::sync::Semaphore::new(in_flight_concurrency));
 
         let transferred_atomic = Arc::new(std::sync::atomic::AtomicU64::new(item.transferred_bytes));
@@ -683,10 +704,10 @@ impl TransferEngine {
                                 break;
                             }
                             let len = data.data.len();
+                            transferred.fetch_add(len as u64, std::sync::atomic::Ordering::Relaxed);
                             if tx_clone.send((task_offset, data.data.to_vec())).await.is_err() {
                                 return Err("Disk writer channel closed".to_string());
                             }
-                            transferred.fetch_add(len as u64, std::sync::atomic::Ordering::Relaxed);
                             task_offset += len as u64;
                             remaining = remaining.saturating_sub(len);
                         }
