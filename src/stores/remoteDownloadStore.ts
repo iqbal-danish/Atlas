@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { api } from '../api';
 import { api as serverdockApi } from '../serverdock/services/api';
+import { useTransferStore } from '../serverdock/stores/transferStore';
 import { UnlistenFn } from '@tauri-apps/api/event';
 
 export type PowerToolApp = 'ultraviewer' | 'feedlens' | 'transformlab' | 'default';
@@ -139,6 +140,7 @@ export const useRemoteDownloadStore = create<RemoteDownloadState>((set, get) => 
       );
 
       set({ transferId: id });
+      useTransferStore.getState().loadTransfers();
 
       activeUnlisten = await serverdockApi.onTransferUpdate((item) => {
         if (item.id !== id) return;
