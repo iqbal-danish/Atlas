@@ -200,81 +200,37 @@ export const MillerColumns: React.FC<MillerColumnsProps> = ({ tabId }) => {
 
   const getEntryIcon = (entry: FsEntry) => {
     if (entry.isDir) {
-      return (
-        <div className="w-5 h-5 rounded bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-xs shadow-amber-500/10">
-          <Folder className="w-3.5 h-3.5 text-amber-400 fill-amber-400/25" />
-        </div>
-      );
+      return <Folder className="w-4 h-4 text-slate-400 shrink-0" />;
     }
     const ext = entry.extension?.toLowerCase() || '';
     if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-yellow-500/15 border border-yellow-500/30 flex items-center justify-center shrink-0">
-          <Archive className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-        </div>
-      );
+      return <Archive className="w-4 h-4 text-amber-400 shrink-0" />;
     }
     if (ext === 'pdf') {
-      return (
-        <div className="w-5 h-5 rounded bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0">
-          <FileText className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-        </div>
-      );
+      return <FileText className="w-4 h-4 text-rose-400 shrink-0" />;
     }
     if (['xlsx', 'xls', 'csv', 'tsv'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
-          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-        </div>
-      );
+      return <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0" />;
     }
     if (['xml', 'xsl', 'xslt', 'svg'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-orange-500/15 border border-orange-500/30 flex items-center justify-center shrink-0">
-          <FileCode className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-        </div>
-      );
+      return <FileCode className="w-4 h-4 text-orange-400 shrink-0" />;
     }
     if (['json', 'json5', 'jsonc', 'yaml', 'yml', 'toml'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-violet-500/15 border border-violet-500/30 flex items-center justify-center shrink-0">
-          <FileCode className="w-3.5 h-3.5 text-violet-400 shrink-0" />
-        </div>
-      );
+      return <FileCode className="w-4 h-4 text-violet-400 shrink-0" />;
     }
     if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'ico'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-pink-500/15 border border-pink-500/30 flex items-center justify-center shrink-0">
-          <FileImage className="w-3.5 h-3.5 text-pink-400 shrink-0" />
-        </div>
-      );
+      return <FileImage className="w-4 h-4 text-pink-400 shrink-0" />;
     }
     if (['rs', 'ts', 'tsx', 'js', 'jsx', 'py', 'html', 'css', 'sql'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center shrink-0">
-          <FileCode className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-        </div>
-      );
+      return <FileCode className="w-4 h-4 text-cyan-400 shrink-0" />;
     }
     if (['doc', 'docx', 'rtf', 'odt'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-blue-500/15 border border-blue-500/30 flex items-center justify-center shrink-0">
-          <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-        </div>
-      );
+      return <FileText className="w-4 h-4 text-blue-400 shrink-0" />;
     }
     if (['txt', 'log', 'md', 'ini', 'cfg', 'conf'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-sky-500/15 border border-sky-500/30 flex items-center justify-center shrink-0">
-          <FileText className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-        </div>
-      );
+      return <FileText className="w-4 h-4 text-slate-300 shrink-0" />;
     }
-    return (
-      <div className="w-5 h-5 rounded bg-white/[0.08] border border-white/15 flex items-center justify-center shrink-0">
-        <FileText className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-      </div>
-    );
+    return <FileText className="w-4 h-4 text-slate-400 shrink-0" />;
   };
 
   return (

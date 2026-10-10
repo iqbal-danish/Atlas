@@ -210,156 +210,84 @@ export const ListView: React.FC<ListViewProps> = ({ tabId }) => {
     if (entry.isDir) {
       const nameLower = entry.name.toLowerCase();
       if (nameLower === '$recycle.bin' || nameLower === 'recycle bin') {
-        return (
-          <div className="w-5 h-5 rounded bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0">
-            <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-          </div>
-        );
+        return <Trash2 className="w-4 h-4 text-rose-400/90 shrink-0" />;
       }
       if (nameLower === 'windows') {
-        return (
-          <div className="w-5 h-5 rounded bg-sky-500/15 border border-sky-500/30 flex items-center justify-center shrink-0">
-            <Monitor className="w-3.5 h-3.5 text-sky-400" />
-          </div>
-        );
+        return <Monitor className="w-4 h-4 text-sky-400/90 shrink-0" />;
       }
       if (nameLower.startsWith('program files') || nameLower === 'programdata') {
-        return (
-          <div className="w-5 h-5 rounded bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0">
-            <Settings className="w-3.5 h-3.5 text-indigo-400" />
-          </div>
-        );
+        return <Settings className="w-4 h-4 text-slate-400 shrink-0" />;
       }
       if (nameLower === 'users') {
-        return (
-          <div className="w-5 h-5 rounded bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
-            <User className="w-3.5 h-3.5 text-emerald-400" />
-          </div>
-        );
+        return <User className="w-4 h-4 text-slate-400 shrink-0" />;
       }
-      return (
-        <div className="w-5 h-5 rounded bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-xs shadow-amber-500/10">
-          <Folder className="w-3.5 h-3.5 text-amber-400 fill-amber-400/25" />
-        </div>
-      );
+      return <Folder className="w-4 h-4 text-slate-400 shrink-0" />;
     }
 
     const ext = entry.extension?.toLowerCase() || '';
 
-    // Archives (ZIP, RAR, 7Z, TAR, GZ) - Gold / Amber
+    // Archives (ZIP, RAR, 7Z, TAR, GZ) - Amber
     if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-yellow-500/15 border border-yellow-500/30 flex items-center justify-center shrink-0">
-          <Archive className="w-3.5 h-3.5 text-yellow-400" />
-        </div>
-      );
+      return <Archive className="w-4 h-4 text-amber-400 shrink-0" />;
     }
 
-    // PDF Documents - High-Contrast Rose Red
+    // PDF Documents - Rose Red
     if (ext === 'pdf') {
-      return (
-        <div className="w-5 h-5 rounded bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0">
-          <FileText className="w-3.5 h-3.5 text-rose-400" />
-        </div>
-      );
+      return <FileText className="w-4 h-4 text-rose-400 shrink-0" />;
     }
 
     // Spreadsheets & Tabular Data (Excel, CSV) - Emerald Green
     if (['xlsx', 'xls', 'csv', 'tsv'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
-          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-        </div>
-      );
+      return <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0" />;
     }
 
-    // XML & Structured Markup - Warm Amber / Orange
+    // XML & Structured Markup - Warm Orange
     if (['xml', 'xsl', 'xslt', 'svg'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-orange-500/15 border border-orange-500/30 flex items-center justify-center shrink-0">
-          <FileCode className="w-3.5 h-3.5 text-orange-400" />
-        </div>
-      );
+      return <FileCode className="w-4 h-4 text-orange-400 shrink-0" />;
     }
 
     // JSON Data - Violet / Purple
     if (['json', 'json5', 'jsonc', 'yaml', 'yml', 'toml'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-violet-500/15 border border-violet-500/30 flex items-center justify-center shrink-0">
-          <FileCode className="w-3.5 h-3.5 text-violet-400" />
-        </div>
-      );
+      return <FileCode className="w-4 h-4 text-violet-400 shrink-0" />;
     }
 
-    // Images - Bright Pink / Magenta
+    // Images - Bright Pink
     if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'ico'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-pink-500/15 border border-pink-500/30 flex items-center justify-center shrink-0">
-          <FileImage className="w-3.5 h-3.5 text-pink-400" />
-        </div>
-      );
+      return <FileImage className="w-4 h-4 text-pink-400 shrink-0" />;
     }
 
-    // Code & Script Files - Electric Cyan
+    // Code & Script Files - Electric Cyan / Sky
     if (['rs', 'ts', 'tsx', 'js', 'jsx', 'py', 'html', 'css', 'sql', 'cpp', 'c', 'h', 'hpp', 'java', 'go', 'php'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center shrink-0">
-          <FileCode className="w-3.5 h-3.5 text-cyan-400" />
-        </div>
-      );
+      return <FileCode className="w-4 h-4 text-cyan-400 shrink-0" />;
     }
 
     // Word & Rich Docs - Clean Blue
     if (['doc', 'docx', 'rtf', 'odt'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-blue-500/15 border border-blue-500/30 flex items-center justify-center shrink-0">
-          <FileText className="w-3.5 h-3.5 text-blue-400" />
-        </div>
-      );
+      return <FileText className="w-4 h-4 text-blue-400 shrink-0" />;
     }
 
     // Audio Files - Fuchsia
     if (['mp3', 'wav', 'flac', 'm4a', 'aac', 'ogg'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-fuchsia-500/15 border border-fuchsia-500/30 flex items-center justify-center shrink-0">
-          <Music className="w-3.5 h-3.5 text-fuchsia-400" />
-        </div>
-      );
+      return <Music className="w-4 h-4 text-fuchsia-400 shrink-0" />;
     }
 
     // Video Files - Indigo
     if (['mp4', 'mkv', 'avi', 'mov', 'wmv', 'webm'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0">
-          <Video className="w-3.5 h-3.5 text-indigo-400" />
-        </div>
-      );
+      return <Video className="w-4 h-4 text-indigo-400 shrink-0" />;
     }
 
-    // System / Executables / Binaries - Steel Grey
+    // System / Executables / Binaries - Slate / Cyan
     if (['dll', 'sys', 'rdb', 'exe', 'msi', 'bat', 'cmd', 'ps1', 'sh'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-slate-500/20 border border-slate-500/35 flex items-center justify-center shrink-0">
-          <Database className="w-3.5 h-3.5 text-slate-300" />
-        </div>
-      );
+      return <Database className="w-4 h-4 text-slate-400 shrink-0" />;
     }
 
-    // Text & Logs - Sky Blue
+    // Text & Logs - Slate Blue
     if (['txt', 'log', 'md', 'ini', 'cfg', 'conf'].includes(ext)) {
-      return (
-        <div className="w-5 h-5 rounded bg-sky-500/15 border border-sky-500/30 flex items-center justify-center shrink-0">
-          <FileText className="w-3.5 h-3.5 text-sky-400" />
-        </div>
-      );
+      return <FileText className="w-4 h-4 text-slate-300 shrink-0" />;
     }
 
     // Default File
-    return (
-      <div className="w-5 h-5 rounded bg-white/[0.08] border border-white/15 flex items-center justify-center shrink-0">
-        <FileText className="w-3.5 h-3.5 text-slate-300" />
-      </div>
-    );
+    return <FileText className="w-4 h-4 text-slate-400 shrink-0" />;
   };
 
   // Breadcrumbs builder
