@@ -73,6 +73,51 @@ export const ListView: React.FC<ListViewProps> = ({ tabId }) => {
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState<string>('');
 
+  // Resizable column width state (default 460px to comfortably fit long filenames without truncating)
+  const [nameWidth, setNameWidth] = useState<number>(() => {
+    const saved = localStorage.getItem('atlas_list_name_width');
+    return saved ? parseInt(saved, 10) || 460 : 460;
+  });
+
+  const handleStartResizeName = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = nameWidth;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const newWidth = Math.max(260, Math.min(1000, startWidth + delta));
+      setNameWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      setNameWidth((current) => {
+        localStorage.setItem('atlas_list_name_width', String(current));
+        return current;
+      });
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
+  const handleDoubleClickResizeName = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    let maxChars = 20;
+    entries.forEach((entry) => {
+      if (entry.name.length > maxChars) {
+        maxChars = entry.name.length;
+      }
+    });
+    const autoWidth = Math.max(320, Math.min(900, Math.round(maxChars * 8.2) + 60));
+    setNameWidth(autoWidth);
+    localStorage.setItem('atlas_list_name_width', String(autoWidth));
+  };
+
   const loadDir = () => {
     if (!currentTab?.path) return;
     setLoading(true);
@@ -498,11 +543,25 @@ export const ListView: React.FC<ListViewProps> = ({ tabId }) => {
       {/* Titanium Table Header */}
       <div className="flex items-center px-4 py-2 border-b border-white/[0.06] bg-[#111219] text-[11px] font-semibold text-slate-400 uppercase tracking-wider select-none">
         <div
-          onClick={() => handleSort('name')}
-          className="w-[340px] shrink-0 flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition"
+          style={{ width: `${nameWidth}px` }}
+          className="shrink-0 flex items-center justify-between relative group/col select-none pr-3"
         >
-          <span>Name</span>
-          {sortField === 'name' && <ArrowUpDown className="w-3 h-3 text-slate-300" />}
+          <div
+            onClick={() => handleSort('name')}
+            className="flex items-center gap-1.5 cursor-pointer hover:text-slate-200 transition min-w-0 truncate"
+          >
+            <span>Name</span>
+            {sortField === 'name' && <ArrowUpDown className="w-3 h-3 text-slate-300" />}
+          </div>
+          {/* Draggable Divider Handle */}
+          <div
+            onMouseDown={handleStartResizeName}
+            onDoubleClick={handleDoubleClickResizeName}
+            className="absolute right-0 top-0 bottom-0 w-2.5 cursor-col-resize flex items-center justify-center hover:bg-blue-500/20 group-hover/col:opacity-100 transition"
+            title="Drag to resize, double-click to auto-fit to longest name"
+          >
+            <div className="w-[1px] h-3 bg-white/20 hover:bg-blue-400" />
+          </div>
         </div>
         <div
           onClick={() => handleSort('modifiedTime')}
@@ -560,7 +619,11 @@ export const ListView: React.FC<ListViewProps> = ({ tabId }) => {
                 }`}
               >
                 {/* Name */}
-                <div className="w-[340px] shrink-0 flex items-center gap-2.5 truncate pr-3 min-w-0">
+                <div
+                  style={{ width: `${nameWidth}px` }}
+                  className="shrink-0 flex items-center gap-2.5 truncate pr-3 min-w-0"
+                  title={entry.name}
+                >
                   {getEntryIcon(entry)}
                   {isRenaming ? (
                     <input
