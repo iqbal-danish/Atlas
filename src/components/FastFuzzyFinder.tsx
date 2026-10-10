@@ -22,7 +22,10 @@ import {
   Info,
   Scissors,
   Layers,
+  Activity,
+  Zap,
 } from 'lucide-react';
+import { useEditorStore } from '../serverdock/stores/editorStore';
 import { SpreadsheetModal } from './SpreadsheetModal';
 
 interface FastFuzzyFinderProps {
@@ -51,6 +54,7 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
     copySelection,
     executeDelete,
     setPropertiesOpen,
+    setLargeFileEditorOpen,
   } = useAppStore();
   const currentTab = tabs.find((t) => t.id === activeTabId);
 
@@ -77,19 +81,31 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const contextMenuRef = useRef(contextMenu);
+  contextMenuRef.current = contextMenu;
 
   // Cached files pool for instant in-memory fuzzy search
   const filePoolRef = useRef<Array<{ name: string; path: string; isDir: boolean; size?: number }>>([]);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeSearchIdRef = useRef<number>(0);
 
-  // Auto-focus when modal opens and populate immediate pool
+  // Auto-focus and reset state when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setQuery('');
+    setSelectedIndex(0);
+    setContextMenu(null);
+    setTimeout(() => inputRef.current?.focus(), 30);
+  }, [isOpen]);
+
+  // Global Escape key handler
   useEffect(() => {
     if (!isOpen) return;
 
     const onGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (contextMenu) {
+        if (contextMenuRef.current) {
           setContextMenu(null);
         } else {
           onClose();
@@ -98,15 +114,10 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
     };
     window.addEventListener('keydown', onGlobalKeyDown, true);
 
-    setQuery('');
-    setSelectedIndex(0);
-    setContextMenu(null);
-    setTimeout(() => inputRef.current?.focus(), 30);
-
     return () => {
       window.removeEventListener('keydown', onGlobalKeyDown, true);
     };
-  }, [isOpen, onClose, contextMenu]);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -347,9 +358,14 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
     const entry = resultToFsEntry(result);
     setSelectedEntry(activeTabId, entry, false);
 
+    const menuWidth = 240;
+    const menuHeight = 440;
+    const x = Math.min(e.clientX, window.innerWidth - menuWidth - 10);
+    const y = Math.min(e.clientY, window.innerHeight - menuHeight - 10);
+
     setContextMenu({
-      x: Math.min(e.clientX, window.innerWidth - 220),
-      y: Math.min(e.clientY, window.innerHeight - 340),
+      x: Math.max(10, x),
+      y: Math.max(10, y),
       result,
     });
   };
@@ -656,13 +672,27 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
             <span className="font-mono text-slate-400">{results.length} results</span>
           </div>
         </div>
+      </div>
 
-        {/* Dedicated In-Finder Action Context Menu */}
-        {contextMenu && (
+      {/* Dedicated In-Finder Action Context Menu & Dismissal Overlay */}
+      {contextMenu && (
+        <>
+          <div
+            className="fixed inset-0 z-[9998]"
+            onClick={(e) => {
+              e.stopPropagation();
+              setContextMenu(null);
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setContextMenu(null);
+            }}
+          />
           <div
             onClick={(e) => e.stopPropagation()}
             style={{ left: contextMenu.x, top: contextMenu.y }}
-            className="fixed z-50 w-56 bg-[#161824] border border-white/15 rounded-xl shadow-2xl py-1.5 text-xs select-none flex flex-col text-slate-200 animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-[9999] w-60 max-h-[85vh] overflow-y-auto bg-[#161824] border border-white/15 rounded-xl shadow-2xl py-1.5 text-xs select-none flex flex-col text-slate-200 animate-in fade-in zoom-in-95 duration-100"
           >
             {/* Header with filename */}
             <div className="px-3 py-1 text-[10px] text-slate-400 font-mono border-b border-white/[0.08] mb-1 truncate">
@@ -708,6 +738,99 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
               <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
               <span>Open with Default App</span>
             </button>
+
+            {/* Power Tools Section */}
+            {!contextMenu.result.isDir && (
+              <div className="py-1 my-0.5 border-y border-white/[0.08] bg-white/[0.02]">
+                <div className="px-3 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                  <span>Power Tools</span>
+                  <span className="text-[9px] font-mono px-1 rounded bg-blue-500/20 text-blue-300">
+                    {(contextMenu.result.name.split('.').pop() || '').toUpperCase()}
+                  </span>
+                </div>
+
+                {/* UltraViewer */}
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.openWithApp('ultraviewer', contextMenu.result.path);
+                    } catch (e) {
+                      alert(`UltraViewer: ${e}`);
+                    }
+                    setContextMenu(null);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.08] text-left transition-colors"
+                  title="Open and edit large XML/JSON files in UltraViewer"
+                >
+                  <Eye className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium text-slate-200 text-xs leading-none">UltraViewer</span>
+                    <span className="text-[9px] text-slate-400 truncate mt-0.5">Large XML/JSON Editor</span>
+                  </div>
+                </button>
+
+                {/* FeedLens */}
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.openWithApp('feedlens', contextMenu.result.path);
+                    } catch (e) {
+                      alert(`FeedLens: ${e}`);
+                    }
+                    setContextMenu(null);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.08] text-left transition-colors"
+                  title="Load into FeedLens for DuckDB streaming feed analysis"
+                >
+                  <Activity className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium text-slate-200 text-xs leading-none">FeedLens</span>
+                    <span className="text-[9px] text-slate-400 truncate mt-0.5">Feed Analyzer & DuckDB</span>
+                  </div>
+                </button>
+
+                {/* TransformLab */}
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.openWithApp('transformlab', contextMenu.result.path);
+                    } catch (e) {
+                      alert(`TransformLab: ${e}`);
+                    }
+                    setContextMenu(null);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.08] text-left transition-colors"
+                  title="Load into TransformLab for XSLT 3.0 / JOLT transformations"
+                >
+                  <Zap className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium text-slate-200 text-xs leading-none">TransformLab</span>
+                    <span className="text-[9px] text-slate-400 truncate mt-0.5">XSLT 3.0 / JOLT Transformer</span>
+                  </div>
+                </button>
+
+                {/* ServerDock Large File Editor */}
+                <button
+                  onClick={() => {
+                    useEditorStore.getState().openFile(contextMenu.result.path, contextMenu.result.name, false);
+                    setLargeFileEditorOpen(true);
+                    setContextMenu(null);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.08] text-left transition-colors"
+                  title="Open in embedded Large File Editor"
+                >
+                  <FileCode className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium text-slate-200 text-xs leading-none">Large File Editor</span>
+                    <span className="text-[9px] text-slate-400 truncate mt-0.5">Streaming Editor & Regex</span>
+                  </div>
+                </button>
+              </div>
+            )}
 
             <div className="h-px bg-white/[0.08] my-1" />
 
@@ -807,8 +930,8 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
               <span>Move to Recycle Bin</span>
             </button>
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* Built-in Full-Screen Spreadsheet Viewer Modal */}
       {spreadsheetFile && (
