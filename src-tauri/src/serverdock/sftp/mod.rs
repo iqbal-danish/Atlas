@@ -506,15 +506,21 @@ impl SftpManager {
         let clean_path = path.replace('\\', "/");
         let norm_path = if clean_path.is_empty() || clean_path == "." {
             "."
+        } else if clean_path == "/" {
+            "/"
         } else {
-            clean_path.trim_end_matches('/')
+            let trimmed = clean_path.trim_end_matches('/');
+            if trimmed.is_empty() { "/" } else { trimmed }
         };
 
         let (client, session_key) = self.get_client_and_key(profile_id).await?;
         let cache_key = format!("{session_key}:{norm_path}");
 
-        // Check cache if not forcing refresh
-        if !force_refresh {
+        // Check cache if not forcing refresh; if forcing refresh, ensure previous cache entry is dropped
+        if force_refresh {
+            let mut cache = self.dir_cache.lock().await;
+            cache.remove(&cache_key);
+        } else {
             let cache = self.dir_cache.lock().await;
             if let Some((timestamp, items)) = cache.get(&cache_key) {
                 if timestamp.elapsed() < std::time::Duration::from_secs(30) {
@@ -559,6 +565,8 @@ impl SftpManager {
             // Always format remote SFTP paths with Unix forward slashes (never use entry.path() which uses Windows backslashes)
             let full_path = if norm_path == "." {
                 name.clone()
+            } else if norm_path == "/" {
+                format!("/{}", name)
             } else if norm_path.ends_with('/') {
                 format!("{}{}", norm_path, name)
             } else {

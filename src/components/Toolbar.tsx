@@ -35,6 +35,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ tabId }) => {
     navigateForward,
     navigateUp,
     navigateTab,
+    refreshTab,
     setViewMode,
     searchQuery,
     setSearchQuery,
@@ -118,9 +119,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({ tabId }) => {
           <ArrowUp className="w-3.5 h-3.5" />
         </button>
         <button
-          onClick={() => navigateTab(tabId, tab.path)}
+          onClick={() => refreshTab(tabId)}
           className="p-1.5 rounded hover:bg-surface text-muted hover:text-foreground"
-          title="Refresh (Ctrl+R)"
+          title="Refresh (Ctrl+R / F5)"
         >
           <RefreshCw className="w-3.5 h-3.5" />
         </button>

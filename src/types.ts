@@ -144,6 +144,7 @@ export interface TabState {
   selectedEntry?: FsEntry;
   selectedPaths: string[];
   filterPattern?: string;
+  refreshKey?: number;
 }
 
 // ==========================================

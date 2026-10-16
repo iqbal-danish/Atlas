@@ -12,6 +12,8 @@ import {
   SystemFolders,
 } from './types';
 import { api } from './api';
+import { useFileStore } from './serverdock/stores/fileStore';
+import { useConnectionStore } from './serverdock/stores/connectionStore';
 
 export interface FileOperation {
   id: string;
@@ -65,6 +67,7 @@ export interface AppStore {
   navigateBack: (tabId: string) => void;
   navigateForward: (tabId: string) => void;
   navigateUp: (tabId: string) => void;
+  refreshTab: (tabId: string) => void;
   setViewMode: (tabId: string, mode: ViewMode) => void;
 
   // Selection actions
@@ -362,6 +365,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
     parts.pop();
     const parentPath = parts.join('\\') + (parts.length === 1 ? '\\' : '');
     get().navigateTab(tabId, parentPath);
+  },
+
+  refreshTab: (tabId) => {
+    const { tabs } = get();
+    const tab = tabs.find((t) => t.id === tabId);
+    if (!tab) return;
+    if (tab.viewMode === 'serverdock' || tab.path.startsWith('serverdock://')) {
+      useFileStore.getState().refreshRemote();
+      useFileStore.getState().refreshLocal();
+      useConnectionStore.getState().refreshStatus();
+      return;
+    }
+    set((state) => ({
+      tabs: state.tabs.map((t) =>
+        t.id === tabId ? { ...t, refreshKey: (t.refreshKey || 0) + 1 } : t
+      ),
+    }));
   },
 
   setViewMode: (tabId, mode) => {

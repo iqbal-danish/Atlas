@@ -134,7 +134,7 @@ export const ListView: React.FC<ListViewProps> = ({ tabId }) => {
 
   useEffect(() => {
     loadDir();
-  }, [currentTab?.path, showHiddenFiles]);
+  }, [currentTab?.path, currentTab?.refreshKey, showHiddenFiles]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {

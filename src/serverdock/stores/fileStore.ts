@@ -288,9 +288,8 @@ export const useFileStore = create<FileState>((set, get) => ({
 
   refreshRemote: async () => {
     const { remotePath } = get();
-    if (remotePath) {
-      await get().loadRemoteDirectory(remotePath, false, true);
-    }
+    const targetPath = remotePath && remotePath.trim() ? remotePath : ".";
+    await get().loadRemoteDirectory(targetPath, false, true);
   },
 
   setRemoteSelected: (paths) => set({ remoteSelected: paths }),

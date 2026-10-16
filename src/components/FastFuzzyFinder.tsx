@@ -714,7 +714,7 @@ export const FastFuzzyFinder: React.FC<FastFuzzyFinderProps> = ({ isOpen, onClos
             </button>
 
             {/* Power Tools Section */}
-            {!contextMenu.result.isDir && (
+            {!contextMenu.result.isDir && /^(xml|xsl|xslt|svg|xsd|wsdl|kml|gml|rss|atom|pom|plist|xib|storyboard|json|jsonc|json5|geojson|topojson|ipynb|har)$/i.test(contextMenu.result.name.split('.').pop() || '') && (
               <div className="py-1 my-0.5 border-y border-white/[0.08] bg-white/[0.02]">
                 <div className="px-3 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                   <span>Power Tools</span>

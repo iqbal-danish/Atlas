@@ -46,22 +46,23 @@ export const api = {
       const pathOrId = slashIdx === -1 ? 'root' : rest.slice(slashIdx + 1) || 'root';
 
       try {
-        const remoteItems = await invoke<RemoteItem[]>('list_remote_directory', {
+        const remoteItems = await invoke<any[]>('list_remote_directory', {
+          path: pathOrId === 'root' ? '.' : pathOrId,
           profileId,
-          pathOrId,
+          forceRefresh: true,
         });
 
-        const entries: FsEntry[] = remoteItems.map((item) => ({
+        const entries: FsEntry[] = remoteItems.map((item: any) => ({
           name: item.name,
-          path: `remote://${profileId}/${item.id}`,
-          isDir: item.isDir,
-          isSymlink: false,
+          path: `remote://${profileId}/${item.path || item.id || item.name}`,
+          isDir: item.is_dir ?? item.isDir ?? false,
+          isSymlink: item.is_symlink ?? item.isSymlink ?? false,
           isHidden: item.name.startsWith('.'),
           isReadonly: false,
-          size: item.size,
-          extension: item.name.includes('.') ? item.name.split('.').pop() : undefined,
-          modifiedTime: item.modifiedTime,
-          createdTime: item.modifiedTime,
+          size: item.size || 0,
+          extension: item.extension || (item.name.includes('.') ? item.name.split('.').pop() : undefined),
+          modifiedTime: item.modified ? item.modified * 1000 : (item.modifiedTime || Date.now()),
+          createdTime: item.modified ? item.modified * 1000 : (item.createdTime || item.modifiedTime || Date.now()),
           isRemote: true,
           remoteProfileId: profileId,
         }));

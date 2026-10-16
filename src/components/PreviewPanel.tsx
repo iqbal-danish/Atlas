@@ -35,12 +35,23 @@ interface PreviewPanelProps {
   tabId: string;
 }
 
+const isXmlOrJsonFile = (entry?: any | null, preview?: FilePreview | null): boolean => {
+  if (!entry) return false;
+  const ext = (entry.extension || entry.name.split('.').pop() || '').toLowerCase();
+  const xmlExts = ['xml', 'xsl', 'xslt', 'svg', 'xsd', 'wsdl', 'kml', 'gml', 'rss', 'atom', 'pom', 'plist', 'xib', 'storyboard'];
+  const jsonExts = ['json', 'jsonc', 'json5', 'geojson', 'topojson', 'ipynb', 'har'];
+  if (xmlExts.includes(ext) || jsonExts.includes(ext)) return true;
+  if (preview?.previewType === 'json' || preview?.previewType === 'xml') return true;
+  return false;
+};
+
 export const PreviewPanel: React.FC<PreviewPanelProps> = ({ tabId }) => {
   const { tabs, previewPanelOpen, setPropertiesOpen, setLargeFileEditorOpen } = useAppStore();
   const currentTab = tabs.find((t) => t.id === tabId);
   const selectedEntry = currentTab?.selectedEntry;
 
   const [preview, setPreview] = useState<FilePreview | null>(null);
+  const isXmlOrJson = useMemo(() => isXmlOrJsonFile(selectedEntry, preview), [selectedEntry, preview]);
   const [archiveEntries, setArchiveEntries] = useState<ArchiveEntryInfo[] | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -328,18 +339,6 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({ tabId }) => {
                           <Code className="w-3 h-3" />
                         </button>
                       )}
-                      {selectedEntry && (
-                        <button
-                          onClick={() => {
-                            useEditorStore.getState().openFile(selectedEntry.path, selectedEntry.name, false);
-                            setLargeFileEditorOpen(true);
-                          }}
-                          className="p-1 rounded text-muted hover:text-blue-400 hover:bg-surface"
-                          title="Open in XML/JSON Viewer (Streaming pagination, syntax validation & regex search)"
-                        >
-                          <Sparkles className="w-3 h-3 text-blue-400" />
-                        </button>
-                      )}
                       <button
                         onClick={() => navigator.clipboard.writeText(formattedContent)}
                         className="p-1 rounded text-muted hover:text-foreground"
@@ -536,85 +535,87 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({ tabId }) => {
                 {!loading && !isImage && !['pdf', 'csv', 'docx', 'pptx'].includes(preview?.previewType || '') && preview?.content && (
                   <div className="bg-surface/80 border border-border rounded-lg overflow-hidden flex flex-col max-h-64">
                     <div className="px-2.5 py-1.5 bg-blue-500/10 border-b border-blue-500/20 text-blue-400 font-semibold text-[11px] flex items-center justify-between shrink-0">
-                      <div className="flex items-center gap-1.5 truncate max-w-[120px]">
+                      <div className={`flex items-center gap-1.5 truncate ${isXmlOrJson ? 'max-w-[120px]' : 'flex-1'}`}>
                         <FileCode className="w-3.5 h-3.5 shrink-0 text-blue-400" />
                         <span className="truncate">{selectedEntry.name}</span>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => {
-                            if (selectedEntry.isRemote || selectedEntry.path.startsWith('remote://')) {
-                              useRemoteDownloadStore.getState().startDownload({
-                                appName: 'ultraviewer',
-                                remotePath: selectedEntry.path,
-                                fileName: selectedEntry.name,
-                                totalBytes: selectedEntry.size,
-                                remoteProfileId: selectedEntry.remoteProfileId,
-                              });
-                            } else {
-                              api.openWithApp('ultraviewer', selectedEntry.path);
-                            }
-                          }}
-                          className="px-1.5 py-0.5 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-[10px] font-medium transition"
-                          title="Open in UltraViewer (Large XML/JSON Editor)"
-                        >
-                          UltraViewer
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (selectedEntry.isRemote || selectedEntry.path.startsWith('remote://')) {
-                              useRemoteDownloadStore.getState().startDownload({
-                                appName: 'feedlens',
-                                remotePath: selectedEntry.path,
-                                fileName: selectedEntry.name,
-                                totalBytes: selectedEntry.size,
-                                remoteProfileId: selectedEntry.remoteProfileId,
-                              });
-                            } else {
-                              api.openWithApp('feedlens', selectedEntry.path);
-                            }
-                          }}
-                          className="px-1.5 py-0.5 rounded bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-[10px] font-medium transition"
-                          title="Open in FeedLens (Feed Analyzer & DuckDB)"
-                        >
-                          FeedLens
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (selectedEntry.isRemote || selectedEntry.path.startsWith('remote://')) {
-                              useRemoteDownloadStore.getState().startDownload({
-                                appName: 'transformlab',
-                                remotePath: selectedEntry.path,
-                                fileName: selectedEntry.name,
-                                totalBytes: selectedEntry.size,
-                                remoteProfileId: selectedEntry.remoteProfileId,
-                              });
-                            } else {
-                              api.openWithApp('transformlab', selectedEntry.path);
-                            }
-                          }}
-                          className="px-1.5 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-medium transition"
-                          title="Open in TransformLab (XSLT 3.0 / JOLT)"
-                        >
-                          TransformLab
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (selectedEntry) {
-                              useEditorStore.getState().openFile(
-                                selectedEntry.path,
-                                selectedEntry.name,
-                                Boolean(selectedEntry.isRemote || selectedEntry.path.startsWith('remote://'))
-                              );
-                              setLargeFileEditorOpen(true);
-                            }
-                          }}
-                          className="p-1 rounded bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 transition"
-                          title="Open in embedded XML/JSON Viewer"
-                        >
-                          <Sparkles className="w-3 h-3 text-purple-300" />
-                        </button>
-                      </div>
+                      {isXmlOrJson && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => {
+                              if (selectedEntry.isRemote || selectedEntry.path.startsWith('remote://')) {
+                                useRemoteDownloadStore.getState().startDownload({
+                                  appName: 'ultraviewer',
+                                  remotePath: selectedEntry.path,
+                                  fileName: selectedEntry.name,
+                                  totalBytes: selectedEntry.size,
+                                  remoteProfileId: selectedEntry.remoteProfileId,
+                                });
+                              } else {
+                                api.openWithApp('ultraviewer', selectedEntry.path);
+                              }
+                            }}
+                            className="px-1.5 py-0.5 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-[10px] font-medium transition"
+                            title="Open in UltraViewer (Large XML/JSON Editor)"
+                          >
+                            UltraViewer
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (selectedEntry.isRemote || selectedEntry.path.startsWith('remote://')) {
+                                useRemoteDownloadStore.getState().startDownload({
+                                  appName: 'feedlens',
+                                  remotePath: selectedEntry.path,
+                                  fileName: selectedEntry.name,
+                                  totalBytes: selectedEntry.size,
+                                  remoteProfileId: selectedEntry.remoteProfileId,
+                                });
+                              } else {
+                                api.openWithApp('feedlens', selectedEntry.path);
+                              }
+                            }}
+                            className="px-1.5 py-0.5 rounded bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-[10px] font-medium transition"
+                            title="Open in FeedLens (Feed Analyzer & DuckDB)"
+                          >
+                            FeedLens
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (selectedEntry.isRemote || selectedEntry.path.startsWith('remote://')) {
+                                useRemoteDownloadStore.getState().startDownload({
+                                  appName: 'transformlab',
+                                  remotePath: selectedEntry.path,
+                                  fileName: selectedEntry.name,
+                                  totalBytes: selectedEntry.size,
+                                  remoteProfileId: selectedEntry.remoteProfileId,
+                                });
+                              } else {
+                                api.openWithApp('transformlab', selectedEntry.path);
+                              }
+                            }}
+                            className="px-1.5 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-medium transition"
+                            title="Open in TransformLab (XSLT 3.0 / JOLT)"
+                          >
+                            TransformLab
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (selectedEntry) {
+                                useEditorStore.getState().openFile(
+                                  selectedEntry.path,
+                                  selectedEntry.name,
+                                  Boolean(selectedEntry.isRemote || selectedEntry.path.startsWith('remote://'))
+                                );
+                                setLargeFileEditorOpen(true);
+                              }
+                            }}
+                            className="p-1 rounded bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 transition"
+                            title="Open in XML/JSON Viewer (Streaming pagination, syntax validation & regex search)"
+                          >
+                            <Sparkles className="w-3 h-3 text-purple-300" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="overflow-auto font-mono text-[11px] leading-relaxed select-text flex flex-1">
                       {showLineNumbers && (

@@ -182,7 +182,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <span>Open with Default App</span>
           </button>
 
-          {!entry.isDir && (
+          {!entry.isDir && /^(xml|xsl|xslt|svg|xsd|wsdl|kml|gml|rss|atom|pom|plist|xib|storyboard|json|jsonc|json5|geojson|topojson|ipynb|har)$/i.test(entry.extension || entry.name.split('.').pop() || '') && (
             <div className="py-1 my-0.5 border-y border-border/60 bg-white/[0.02]">
               <div className="px-3 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted/70 flex items-center justify-between">
                 <span>Power Tools</span>

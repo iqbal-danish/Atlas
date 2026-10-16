@@ -44,6 +44,7 @@ export function App() {
     executeDelete,
     setPropertiesOpen,
     navigateTab,
+    refreshTab,
     navigateUp,
     navigateBack,
     navigateForward,
@@ -87,10 +88,7 @@ export function App() {
       // Refresh current directory: F5 or Ctrl+R
       else if (e.key === 'F5' || (isCmdOrCtrl && e.key === 'r')) {
         e.preventDefault();
-        const tab = tabs.find((t) => t.id === activeTabId);
-        if (tab && tab.path && !tab.path.startsWith('serverdock://')) {
-          navigateTab(activeTabId, tab.path);
-        }
+        refreshTab(activeTabId);
       }
       // Switch View Mode: Ctrl+1 (List), Ctrl+2 (Columns)
       else if (isCmdOrCtrl && e.key === '1') {

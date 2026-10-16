@@ -118,7 +118,7 @@ export const MillerColumns: React.FC<MillerColumnsProps> = ({ tabId }) => {
     initialColumns.forEach((col, idx) => {
       fetchColumn(col.path, idx);
     });
-  }, [currentTab?.path, showHiddenFiles]);
+  }, [currentTab?.path, currentTab?.refreshKey, showHiddenFiles]);
 
   const handleEntryClick = (entry: FsEntry, colIndex: number, e: React.MouseEvent) => {
     const isMulti = e.ctrlKey || e.metaKey;
