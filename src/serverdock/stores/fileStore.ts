@@ -250,7 +250,29 @@ export const useFileStore = create<FileState>((set, get) => ({
         activeServerId: activeId || null,
       });
     } catch (e: any) {
-      set({ remoteLoading: false, remoteError: e.toString(), remoteFiles: [] });
+      const errStr = String(e || "");
+      if (errStr.includes("session closed") || errStr.includes("No active connection") || errStr.includes("Broken pipe")) {
+        const activeProfile = useConnectionStore.getState().connectedProfiles.find((p) => p.id === activeId)
+          || useConnectionStore.getState().profiles.find((p) => p.id === activeId);
+        if (activeProfile) {
+          try {
+            const reconnected = await useConnectionStore.getState().connect(activeProfile);
+            if (reconnected) {
+              const retryFiles = await api.listRemoteDirectory(cleanPath, activeId, true);
+              set({
+                remotePath: cleanPath,
+                remoteFiles: retryFiles,
+                remoteLoading: false,
+                remoteError: null,
+              });
+              return;
+            }
+          } catch (retryErr) {
+            console.error("Auto-reconnect fallback failed:", retryErr);
+          }
+        }
+      }
+      set({ remoteLoading: false, remoteError: errStr, remoteFiles: [] });
     }
   },
 

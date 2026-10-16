@@ -504,6 +504,7 @@ export const FileBrowser: React.FC<FileBrowserProps> = ({ onSwitchTab }) => {
               setContextMenu({ x: e.clientX, y: e.clientY, item, isRemote: true });
             }}
             onDropFiles={handleDropToRemote}
+            onRetry={refreshRemote}
           />
         )}
 
